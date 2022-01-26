@@ -18,13 +18,13 @@ Usage of `hddrand` is straightforward:
 hddrand [--verify] /dev/disk
 ```
 
-An initial (write) pass of `hddrand` is used by omitting the `--verify` when invoking the application. `hddrand` will generate a cryptographically secure seed from which it will derive the 8-round ChaCha CSPRNG stream. This seed is written to the start of the disk and is read by the verification pass to initialize the CSPRNG from the same point. `hddrand` will report its progress as well as the current write/wipe speed as it makes its way through the disk (or file) at the path specified.
+An initial (write) pass of `hddrand` is used by omitting `--verify` when invoking the application. `hddrand` will generate a cryptographically secure seed from which it will derive the 8-round ChaCha CSPRNG stream. This seed is written to the start of the disk and is read by the verification pass to initialize the CSPRNG from the same point. `hddrand` will report its progress as well as the current write/wipe speed as it makes its way through the disk (or file) at the path specified.
 
 A verification/validation pass of `hddrand` is performed by invoking `hddrand --verify` against the same path as the write pass, in which case `hddrand` will read the seed saved to the start of the device and initialize the CSPRNG from the same, allowing it to reconstruct in memory the expected contents of the disk as it reads the actual contents that have been written. `hddrand` will report its progress as it validates the entirety of the disk/file along with the speed at which it is reading from the target device. If at any point the actual bytes read back diverge from the expected contents, `hddrand` will display an error with the details.
 
 # Installation
 
-`hddrand` supports all platforms, including Windows, Linux, FreeBSD, and macOS. `hddrand` is not yet included in any of the mainstream package managers, users will need to download a precompiled binary or compile and install `hddrand` from sources (`cargo install hddrand` should do the trick if you have rust installed).
+`hddrand` supports all platforms, including Windows, Linux, FreeBSD, and macOS. `hddrand` is not yet included in any of the mainstream package managers; users will need to download a precompiled binary or compile and install `hddrand` from sources (you can use `cargo install hddrand` if you have rust installed).
 
 # License and Credits
 
