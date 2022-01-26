@@ -8,6 +8,8 @@ use std::io::{Read, Seek, SeekFrom, Write};
 use std::path::Path;
 use std::time::{Duration, Instant};
 
+const ENOSPC: i32 = 28;
+
 fn main() {
     let args: Vec<_> = env::args().skip(1).collect();
     if args.len() == 0 {
@@ -172,7 +174,12 @@ fn fill_drive(path: &Path) -> std::io::Result<(usize, Duration)> {
 
         let mut read_offset = 0;
         loop {
-            let written = file.write(&buffer[read_offset..])?;
+            let written = match file.write(&buffer[read_offset..]) {
+                Ok(bytes) => bytes,
+                Err(e) if e.raw_os_error() == Some(ENOSPC) =>
+                    return Ok((total_written.load(Ordering::Acquire), start.elapsed())),
+                Err(e) => return Err(e),
+            };
             read_offset += written;
             total_written.fetch_add(written, Ordering::SeqCst);
 
