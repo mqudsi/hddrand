@@ -6,7 +6,7 @@ edition = "2018"
 homepage = "https://github.com/mqudsi/hddrand/"
 repository = "https://github.com/mqudsi/hddrand/"
 readme = "README.md"
-keywords = ["cryptography", "hard drive", "benchmarking", "security"]
+keywords = ["cryptography", "drive", "benchmarking", "security"]
 categories = ["command-line-utilities"]
 license = "MIT"
 
