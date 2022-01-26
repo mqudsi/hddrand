@@ -1,11 +1,11 @@
 use rand::{RngCore, SeedableRng};
 use size::Size;
-use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::env;
 use std::fs::OpenOptions;
 use std::io::{Read, Seek, SeekFrom, Write};
 use std::path::Path;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::time::{Duration, Instant};
 
 const ENOSPC: i32 = 28;
@@ -22,8 +22,10 @@ fn main() {
     for arg in args.iter() {
         match arg.as_str() {
             "verify" | "--verify" => verify = true,
-            path => if path.starts_with('/') {
-                drive = Some(path);
+            path => {
+                if path.starts_with('/') {
+                    drive = Some(path);
+                }
             }
         }
     }
@@ -33,7 +35,7 @@ fn main() {
             println!("USAGE: hddrand [--verify] /dev/disk");
             std::process::exit(1);
         }
-        Some(drive) => drive
+        Some(drive) => drive,
     };
 
     let path = Path::new(&drive);
@@ -54,18 +56,25 @@ fn main() {
         Err(e) => {
             eprintln!("{}", e);
             std::process::exit(-1);
-        },
-        Ok(result) => println!("{} {} bytes to {} in {} seconds",
+        }
+        Ok(result) => println!(
+            "{} {} bytes to {} in {} seconds",
             if verify { "Verified" } else { "Wrote" },
-            result.0, path.display(), result.1.as_secs())
+            result.0,
+            path.display(),
+            result.1.as_secs()
+        ),
     };
 }
 
 struct OnDrop<F>(F)
-    where F: FnMut() -> ();
+where
+    F: FnMut() -> ();
 
 impl<F> Drop for OnDrop<F>
-where F: FnMut() -> () {
+where
+    F: FnMut() -> (),
+{
     fn drop(&mut self) -> () {
         self.0();
     }
@@ -81,9 +90,7 @@ fn verify_drive(path: &Path) -> std::io::Result<(usize, Duration)> {
     let start = Instant::now();
     let done = Arc::new(AtomicBool::new(false));
     let total_read = Arc::new(AtomicUsize::new(0));
-    let mut file = OpenOptions::new()
-        .read(true)
-        .open(path)?;
+    let mut file = OpenOptions::new().read(true).open(path)?;
 
     start_progress_thread(total_read.clone(), done.clone());
     let on_drop = OnDrop(|| done.clone().store(true, Ordering::Release));
@@ -122,14 +129,20 @@ fn verify_drive(path: &Path) -> std::io::Result<(usize, Duration)> {
 
                 // Find the start of the mismatch
                 let mut mismatch_start = 0;
-                for i in write_offset..(write_offset+read) {
+                for i in write_offset..(write_offset + read) {
                     if read_buffer[i] != rand_buffer[i] {
                         mismatch_start = i;
                         break;
                     }
                 }
-                eprintln!("Content mismatch starting at offset {:x}", write_offset + mismatch_start);
-                eprintln!("Expected {:x}, found {:x}", rand_buffer[mismatch_start], read_buffer[mismatch_start]);
+                eprintln!(
+                    "Content mismatch starting at offset {:x}",
+                    write_offset + mismatch_start
+                );
+                eprintln!(
+                    "Expected {:x}, found {:x}",
+                    rand_buffer[mismatch_start], read_buffer[mismatch_start]
+                );
                 return Ok((total_read.load(Ordering::Acquire), start.elapsed()));
             }
 
@@ -146,7 +159,6 @@ fn verify_drive(path: &Path) -> std::io::Result<(usize, Duration)> {
     }
 }
 
-
 fn fill_drive(path: &Path) -> std::io::Result<(usize, Duration)> {
     let seed: [u8; 32] = rand::random();
     let mut rng = rand_chacha::ChaCha8Rng::from_seed(seed);
@@ -158,9 +170,7 @@ fn fill_drive(path: &Path) -> std::io::Result<(usize, Duration)> {
     let start = Instant::now();
     let done = Arc::new(AtomicBool::new(false));
     let total_written = Arc::new(AtomicUsize::new(0));
-    let mut file = OpenOptions::new()
-        .write(true)
-        .open(path)?;
+    let mut file = OpenOptions::new().write(true).open(path)?;
 
     start_progress_thread(total_written.clone(), done.clone());
     let _on_drop = OnDrop(|| done.clone().store(true, Ordering::Release));
@@ -176,8 +186,9 @@ fn fill_drive(path: &Path) -> std::io::Result<(usize, Duration)> {
         loop {
             let written = match file.write(&buffer[read_offset..]) {
                 Ok(bytes) => bytes,
-                Err(e) if e.raw_os_error() == Some(ENOSPC) =>
-                    return Ok((total_written.load(Ordering::Acquire), start.elapsed())),
+                Err(e) if e.raw_os_error() == Some(ENOSPC) => {
+                    return Ok((total_written.load(Ordering::Acquire), start.elapsed()))
+                }
                 Err(e) => return Err(e),
             };
             read_offset += written;
@@ -206,7 +217,11 @@ fn start_progress_thread(total_bytes: Arc<AtomicUsize>, done: Arc<AtomicBool>) {
                 let elapsed_secs = timer.elapsed().as_nanos() as f64 / (10_u64.pow(9) as f64);
                 let rate = written as f64 / elapsed_secs;
                 timer = Instant::now();
-                eprint!("\r{} @ {}/sec     \x08\x08\x08\x08\x08", Size::Bytes(new_bytes), Size::Bytes(rate));
+                eprint!(
+                    "\r{} @ {}/sec     \x08\x08\x08\x08\x08",
+                    Size::Bytes(new_bytes),
+                    Size::Bytes(rate)
+                );
             } else {
                 break;
             }
