@@ -219,8 +219,8 @@ fn start_progress_thread(total_bytes: Arc<AtomicUsize>, done: Arc<AtomicBool>) {
                 timer = Instant::now();
                 eprint!(
                     "\r{} @ {}/sec     \x08\x08\x08\x08\x08",
-                    Size::Bytes(new_bytes),
-                    Size::Bytes(rate)
+                    Size::from_bytes(new_bytes),
+                    Size::from_bytes(rate)
                 );
             } else {
                 break;
