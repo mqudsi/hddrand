@@ -1,6 +1,6 @@
 [package]
 name = "hddrand"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Mahmoud Al-Qudsi <mqudsi@neosmart.net>"]
 description = "Benchmark drive writes with non-compressible data or wipe disks with random content"
 edition = "2018"
