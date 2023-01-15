@@ -124,7 +124,7 @@ fn verify_drive(path: &Path) -> std::io::Result<(usize, Duration)> {
     let mut file = OpenOptions::new().read(true).open(path)?;
 
     start_progress_thread(total_read.clone(), done.clone());
-    let on_drop = OnDrop(|| done.clone().store(true, Ordering::Release));
+    let on_drop = OnDrop(|| done.clone().store(true, Ordering::Relaxed));
 
     // This needs to be a multiple of the page size on some platforms!
     let mut seed_buf = [0u8; 1024];
@@ -174,17 +174,17 @@ fn verify_drive(path: &Path) -> std::io::Result<(usize, Duration)> {
                     "Expected {:x}, found {:x}",
                     rand_buffer[mismatch_start], read_buffer[mismatch_start]
                 );
-                return Ok((total_read.load(Ordering::Acquire), start.elapsed()));
+                return Ok((total_read.load(Ordering::Relaxed), start.elapsed()));
             }
 
             write_offset += read;
-            total_read.fetch_add(read, Ordering::SeqCst);
+            total_read.fetch_add(read, Ordering::Relaxed);
 
             if read == rand_buffer.len() {
                 break;
             }
             if read == 0 {
-                return Ok((total_read.load(Ordering::Acquire), start.elapsed()));
+                return Ok((total_read.load(Ordering::Relaxed), start.elapsed()));
             }
         }
     }
