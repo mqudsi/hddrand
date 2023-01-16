@@ -15,7 +15,13 @@ At the time of decommissioning a disk, `hddrand` may be used in lieu of an all-z
 Usage of `hddrand` is straightforward:
 
 ```
-hddrand [--verify] /dev/disk
+hddrand [--verify] /dev/daXX
+```
+
+Under Windows, you would instead use a drive path like the following, with the value of `PhysicalDriveX` taken by inspecting the disk ids visible under Disk Management (`diskmgmt.msc`):
+
+```
+hddrand [--verify] \\?\PhysicalDriveX
 ```
 
 An initial (write) pass of `hddrand` is used by omitting `--verify` when invoking the application. `hddrand` will generate a cryptographically secure seed from which it will derive the 8-round ChaCha CSPRNG stream. This seed is written to the start of the disk and is read by the verification pass to initialize the CSPRNG from the same point. `hddrand` will report its progress as well as the current write/wipe speed as it makes its way through the disk (or file) at the path specified.
