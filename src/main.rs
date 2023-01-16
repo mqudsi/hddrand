@@ -9,11 +9,14 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 const ENOENT: i32 = 2;
+#[cfg(not(windows))]
 const ENOSPC: i32 = 28;
-#[cfg_attr(not(windows), allow(dead_code))]
+#[cfg(windows)]
 const ERROR_PATH_NOT_FOUND: i32 = 3;
-#[cfg_attr(not(windows), allow(dead_code))]
+#[cfg(windows)]
 const ERROR_ACCESS_DENIED: i32 = 5;
+#[cfg(windows)]
+const ERROR_SECTOR_NOT_FOUND: i32 = 27;
 
 fn print_usage() {
     #[cfg(not(windows))]
@@ -217,7 +220,12 @@ fn fill_drive(path: &Path) -> std::io::Result<(usize, Duration)> {
         loop {
             let written = match file.write(&buffer[read_offset..]) {
                 Ok(bytes) => bytes,
+                #[cfg(not(windows))]
                 Err(e) if e.raw_os_error() == Some(ENOSPC) => {
+                    return Ok((total_written.load(Ordering::Acquire), start.elapsed()))
+                }
+                #[cfg(windows)]
+                Err(e) if e.raw_os_error() == Some(ERROR_SECTOR_NOT_FOUND) => {
                     return Ok((total_written.load(Ordering::Acquire), start.elapsed()))
                 }
                 Err(e) => return Err(e),
