@@ -1,4 +1,4 @@
-use rand::{RngCore, SeedableRng};
+use rand::{Rng, SeedableRng};
 use size::Size;
 use std::env;
 use std::fs::OpenOptions;
@@ -278,8 +278,9 @@ enum NtFileStatus {
 #[cfg(windows)]
 fn nt_exists(path: &str) -> NtFileStatus {
     use windows_sys::{
-        Win32::Foundation::*, Win32::Storage::FileSystem::*, Win32::System::Kernel::*,
-        Win32::System::WindowsProgramming::*,
+        Win32::Foundation::*, Win32::Storage::FileSystem::*,
+        Win32::System::IO::*, Wdk::Storage::FileSystem::*,
+        Wdk::Foundation::*
     };
 
     let mut unicode_str: Vec<u16> = path.encode_utf16().into_iter().collect();
@@ -290,7 +291,7 @@ fn nt_exists(path: &str) -> NtFileStatus {
     };
     let mut obj_attr = OBJECT_ATTRIBUTES {
         Length: 0,
-        RootDirectory: 0,
+        RootDirectory: std::ptr::null_mut(),
         ObjectName: &mut unicode_path as *mut _,
         Attributes: OBJ_CASE_INSENSITIVE as _,
         SecurityDescriptor: std::ptr::null_mut() as *mut _,
@@ -299,7 +300,7 @@ fn nt_exists(path: &str) -> NtFileStatus {
     obj_attr.Length = std::mem::size_of_val(&obj_attr) as _;
 
     unsafe {
-        let mut handle = 0;
+        let mut handle = std::ptr::null_mut();
         let mut status_block: IO_STATUS_BLOCK = std::mem::zeroed();
 
         let result = NtCreateFile(
