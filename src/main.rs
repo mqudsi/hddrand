@@ -278,9 +278,8 @@ enum NtFileStatus {
 #[cfg(windows)]
 fn nt_exists(path: &str) -> NtFileStatus {
     use windows_sys::{
-        Win32::Foundation::*, Win32::Storage::FileSystem::*,
-        Win32::System::IO::*, Wdk::Storage::FileSystem::*,
-        Wdk::Foundation::*
+        Wdk::Foundation::*, Wdk::Storage::FileSystem::*, Win32::Foundation::*,
+        Win32::Storage::FileSystem::*, Win32::System::IO::*,
     };
 
     let mut unicode_str: Vec<u16> = path.encode_utf16().into_iter().collect();
